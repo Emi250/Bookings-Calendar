@@ -79,25 +79,18 @@ with tab2:
 
     archivo = st.file_uploader("Subí un archivo de reservas", type=["csv", "json", "xls", "xlsx"])
 
-    if archivo:
-        if archivo.name.endswith(".csv"):
-            df = pd.read_csv(archivo)
-        else:
-            df = pd.read_json(archivo)
+    import os
 
-        st.dataframe(df)
-        try:
-            reservas_archivo = []
-            for _, r in df.iterrows():
-                entrada = pd.to_datetime(r["entrada"])
-                salida = pd.to_datetime(r["salida"])
-                reservas_archivo.append({
-                    "entrada": entrada,
-                    "salida": salida,
-                    "nombre": r["nombre"],
-                    "personas": int(r["personas"])
-                })
-            st.subheader("📜 Texto desde archivo")
-            st.markdown(formatear_reservas(reservas_archivo))
-        except Exception as e:
-            st.error(f"No se pudo procesar el archivo: {e}")
+if archivo is not None:
+    nombre = archivo.name.lower()
+    try:
+        if nombre.endswith(".csv"):
+            df = pd.read_csv(archivo)
+        elif nombre.endswith(".json"):
+            df = pd.read_json(archivo, encoding='utf-8')  # opcionalmente try ISO-8859-1 si falla
+        elif nombre.endswith((".xls", ".xlsx")):
+            df = pd.read_excel(archivo)
+        else:
+            st.error("Formato de archivo no soportado. Usa .csv, .json, .xls o .xlsx.")
+    except Exception as e:
+        st.error(f"No se pudo leer el archivo: {e}")
