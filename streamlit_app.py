@@ -116,9 +116,28 @@ with tab2:
 
                     texto = formatear_reservas(reservas)
                     st.markdown("### 📝 Texto generado")
-                    st.text_area("Texto formateado desde el archivo:", value=texto, height=300)
-                    st.download_button("📥 Descargar como .txt", data=texto, file_name="reservas.txt")
-                    st.code("Seleccioná y copiá el texto con Ctrl+C o clic derecho", language="")
+                   st.text_area("Texto generado:", value=texto, height=300, key="text_area")
+
+# Botón personalizado para copiar
+copy_code = f"""
+    <script>
+    function copyToClipboard(text) {{
+        navigator.clipboard.writeText(text).then(function() {{
+            alert("Texto copiado al portapapeles");
+        }}, function(err) {{
+            alert("Error al copiar el texto");
+        }});
+    }}
+    </script>
+    <button onclick="copyToClipboard(document.getElementById('text_area').value)">Copiar</button>
+"""
+
+# Mostrar el botón HTML
+st.markdown(copy_code, unsafe_allow_html=True)
+
+# Botón de descarga
+st.download_button("📥 Descargar como .txt", data=texto, file_name="reservas.txt")
+)
 
         except Exception as e:
             st.error(f"No se pudo procesar el archivo: {e}")
