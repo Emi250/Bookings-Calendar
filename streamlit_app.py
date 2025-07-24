@@ -77,20 +77,42 @@ with tab1:
 with tab2:
     st.header("📂 Visualizador de reservas")
 
-    archivo = st.file_uploader("Subí un archivo de reservas", type=["csv", "json", "xls", "xlsx"])
+    archivo = st.file_uploader("Subí un archivo de reservas (.csv, .json, .xls, .xlsx)", type=["csv", "json", "xls", "xlsx"])
 
-    import os
+    if archivo:
+        nombre = archivo.name.lower()
+        try:
+            if nombre.endswith(".csv"):
+                df = pd.read_csv(archivo)
+            elif nombre.endswith(".json"):
+                df = pd.read_json(archivo, encoding='utf-8')
+            elif nombre.endswith((".xls", ".xlsx")):
+                df = pd.read_excel(archivo)
+            else:
+                st.error("Formato de archivo no soportado.")
+                df = None
 
-if archivo is not None:
-    nombre = archivo.name.lower()
-    try:
-        if nombre.endswith(".csv"):
-            df = pd.read_csv(archivo)
-        elif nombre.endswith(".json"):
-            df = pd.read_json(archivo, encoding='utf-8')  # opcionalmente try ISO-8859-1 si falla
-        elif nombre.endswith((".xls", ".xlsx")):
-            df = pd.read_excel(archivo)
-        else:
-            st.error("Formato de archivo no soportado. Usa .csv, .json, .xls o .xlsx.")
-    except Exception as e:
-        st.error(f"No se pudo leer el archivo: {e}")
+            if df is not None:
+                st.subheader("📊 Datos cargados")
+                st.dataframe(df)
+
+                # Convertir a lista de reservas válidas
+                reservas_archivo = []
+                for _, r in df.iterrows():
+                    entrada = pd.to_datetime(r["entrada"])
+                    salida = pd.to_datetime(r["salida"])
+                    reservas_archivo.append({
+                        "entrada": entrada,
+                        "salida": salida,
+                        "nombre": r["nombre"],
+                        "personas": int(r["personas"])
+                    })
+
+                # Mostrar texto generado automáticamente
+                st.markdown("### 📝 Texto generado")
+                texto_archivo = formatear_reservas(reservas_archivo)
+                st.text_area("Texto formateado desde el archivo:", value=texto_archivo, height=300)
+                st.download_button("📥 Descargar texto", data=texto_archivo, file_name="reservas_generadas.txt")
+
+        except Exception as e:
+            st.error(f"No se pudo leer el archivo: {e}")
