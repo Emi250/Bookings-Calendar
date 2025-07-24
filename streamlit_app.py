@@ -66,5 +66,6 @@ if st.session_state.reservas:
     if st.button("Limpiar reservas"):
         st.session_state.reservas = []
 
----
+# -------------------------------
+
 
