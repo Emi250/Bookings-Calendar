@@ -4,7 +4,7 @@ from datetime import datetime
 
 st.set_page_config(page_title="Gestor de Reservas", layout="wide")
 
-# Función con * en vez de ** para negrita estilo WhatsApp
+# Función que genera texto con * para WhatsApp
 def formatear_reservas(reservas):
     dias_semana = {
         0: "LUNES", 1: "MARTES", 2: "MIÉRCOLES", 3: "JUEVES",
@@ -27,12 +27,14 @@ def formatear_reservas(reservas):
         )
     return resultado.strip()
 
+# Inicializar sesión
 if "reservas" not in st.session_state:
     st.session_state.reservas = []
 
+# Tabs
 tab1, tab2 = st.tabs(["➕ Ingresar reservas", "📂 Visualizar desde archivo"])
 
-# TAB 1: Ingreso manual
+# ---------------- TAB 1 ----------------
 with tab1:
     st.header("➕ Agregar reserva manualmente")
 
@@ -65,31 +67,32 @@ with tab1:
     if st.session_state.reservas:
         st.subheader("📝 Texto generado")
         texto = formatear_reservas(st.session_state.reservas)
-       st.text_area("Texto generado:", value=texto, height=300, key="text_area")
 
-# Botón personalizado para copiar
-copy_code = f"""
-    <script>
-    function copyToClipboard(text) {{
-        navigator.clipboard.writeText(text).then(function() {{
-            alert("Texto copiado al portapapeles");
-        }}, function(err) {{
-            alert("Error al copiar el texto");
-        }});
-    }}
-    </script>
-    <button onclick="copyToClipboard(document.getElementById('text_area').value)">Copiar</button>
-"""
+        st.text_area("Texto generado:", value=texto, height=300, key="text_area_manual")
 
-# Mostrar el botón HTML
-st.markdown(copy_code, unsafe_allow_html=True)
+        st.markdown(
+            """
+            <script>
+            function copyToClipboardManual() {
+                const text = document.getElementById("text_area_manual").value;
+                navigator.clipboard.writeText(text).then(function() {
+                    alert("Texto copiado al portapapeles");
+                }, function(err) {
+                    alert("No se pudo copiar el texto");
+                });
+            }
+            </script>
+            <button onclick="copyToClipboardManual()">Copiar</button>
+            """,
+            unsafe_allow_html=True
+        )
 
-# Botón de descarga
-st.download_button("📥 Descargar como .txt", data=texto, file_name="reservas.txt")
+        st.download_button("📥 Descargar como .txt", data=texto, file_name="reservas.txt")
+
         if st.button("🧹 Limpiar reservas"):
             st.session_state.reservas = []
 
-# TAB 2: Desde archivo
+# ---------------- TAB 2 ----------------
 with tab2:
     st.header("📂 Visualizador de reservas desde archivo")
 
@@ -132,28 +135,28 @@ with tab2:
                         })
 
                     texto = formatear_reservas(reservas)
+
                     st.markdown("### 📝 Texto generado")
-                   st.text_area("Texto generado:", value=texto, height=300, key="text_area")
+                    st.text_area("Texto generado:", value=texto, height=300, key="text_area_archivo")
 
-# Botón personalizado para copiar
-copy_code = f"""
-    <script>
-    function copyToClipboard(text) {{
-        navigator.clipboard.writeText(text).then(function() {{
-            alert("Texto copiado al portapapeles");
-        }}, function(err) {{
-            alert("Error al copiar el texto");
-        }});
-    }}
-    </script>
-    <button onclick="copyToClipboard(document.getElementById('text_area').value)">Copiar</button>
-"""
+                    st.markdown(
+                        """
+                        <script>
+                        function copyToClipboardArchivo() {
+                            const text = document.getElementById("text_area_archivo").value;
+                            navigator.clipboard.writeText(text).then(function() {
+                                alert("Texto copiado al portapapeles");
+                            }, function(err) {
+                                alert("No se pudo copiar el texto");
+                            });
+                        }
+                        </script>
+                        <button onclick="copyToClipboardArchivo()">Copiar</button>
+                        """,
+                        unsafe_allow_html=True
+                    )
 
-# Mostrar el botón HTML
-st.markdown(copy_code, unsafe_allow_html=True)
-
-# Botón de descarga
-st.download_button("📥 Descargar como .txt", data=texto, file_name="reservas.txt")
+                    st.download_button("📥 Descargar como .txt", data=texto, file_name="reservas.txt")
 
         except Exception as e:
             st.error(f"No se pudo procesar el archivo: {e}")
