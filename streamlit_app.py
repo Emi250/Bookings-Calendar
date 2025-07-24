@@ -4,7 +4,7 @@ from datetime import datetime
 
 st.set_page_config(page_title="Gestor de Reservas", layout="wide")
 
-# Función que genera texto con * para WhatsApp
+# Función formateadora para un grupo de reservas
 def formatear_reservas(reservas):
     dias_semana = {
         0: "LUNES", 1: "MARTES", 2: "MIÉRCOLES", 3: "JUEVES",
@@ -15,6 +15,7 @@ def formatear_reservas(reservas):
         5: "MAYO", 6: "JUNIO", 7: "JULIO", 8: "AGOSTO",
         9: "SEPTIEMBRE", 10: "OCTUBRE", 11: "NOVIEMBRE", 12: "DICIEMBRE"
     }
+
     resultado = ""
     for r in reservas:
         entrada = r["entrada"]
@@ -27,11 +28,10 @@ def formatear_reservas(reservas):
         )
     return resultado.strip()
 
-# Inicializar sesión
+# Inicializar estado
 if "reservas" not in st.session_state:
     st.session_state.reservas = []
 
-# Tabs
 tab1, tab2 = st.tabs(["➕ Ingresar reservas", "📂 Visualizar desde archivo"])
 
 # ---------------- TAB 1 ----------------
@@ -47,6 +47,7 @@ with tab1:
 
         nombre = st.text_input("Nombre del huésped").strip()
         personas = st.number_input("Cantidad de personas", min_value=1, step=1)
+        unidad = st.selectbox("Departamento", ["Departamento 1", "Departamento 2", "Departamento 3"])
 
         agregar = st.form_submit_button("Agregar")
 
@@ -60,34 +61,20 @@ with tab1:
                     "entrada": entrada,
                     "salida": salida,
                     "nombre": nombre,
-                    "personas": personas
+                    "personas": personas,
+                    "unidad": unidad
                 })
                 st.success("Reserva agregada.")
 
     if st.session_state.reservas:
-        st.subheader("📝 Texto generado")
-        texto = formatear_reservas(st.session_state.reservas)
-
-        st.text_area("Texto generado:", value=texto, height=300, key="text_area_manual")
-
-        st.markdown(
-            """
-            <script>
-            function copyToClipboardManual() {
-                const text = document.getElementById("text_area_manual").value;
-                navigator.clipboard.writeText(text).then(function() {
-                    alert("Texto copiado al portapapeles");
-                }, function(err) {
-                    alert("No se pudo copiar el texto");
-                });
-            }
-            </script>
-            <button onclick="copyToClipboardManual()">Copiar</button>
-            """,
-            unsafe_allow_html=True
-        )
-
-        st.download_button("📥 Descargar como .txt", data=texto, file_name="reservas.txt")
+        st.subheader("📝 Texto generado por departamento")
+        # Agrupar por unidad
+        df_manual = pd.DataFrame(st.session_state.reservas)
+        for unidad in sorted(df_manual["unidad"].unique()):
+            grupo = df_manual[df_manual["unidad"] == unidad].to_dict(orient="records")
+            texto = formatear_reservas(grupo)
+            st.text_area(f"Departamento {unidad.split()[-1]}", value=f"Departamento {unidad.split()[-1]}:\n\n{texto}", height=300)
+            st.code(f"Departamento {unidad.split()[-1]}:\n\n{texto}", language="")
 
         if st.button("🧹 Limpiar reservas"):
             st.session_state.reservas = []
@@ -115,15 +102,16 @@ with tab2:
                     "nombre del cliente (o clientes)": "nombre",
                     "personas": "personas",
                     "entrada": "entrada",
-                    "salida": "salida"
+                    "salida": "salida",
+                    "tipo de unidad": "unidad"
                 }, inplace=True)
 
-                columnas_necesarias = {"entrada", "salida", "nombre", "personas"}
+                columnas_necesarias = {"entrada", "salida", "nombre", "personas", "unidad"}
                 if not columnas_necesarias.issubset(df.columns):
                     st.error(f"Faltan columnas necesarias: {columnas_necesarias - set(df.columns)}")
                 else:
                     st.subheader("📊 Datos del archivo")
-                    st.dataframe(df[["entrada", "salida", "nombre", "personas"]])
+                    st.dataframe(df[["entrada", "salida", "nombre", "personas", "unidad"]])
 
                     reservas = []
                     for _, r in df.iterrows():
@@ -131,34 +119,17 @@ with tab2:
                             "entrada": pd.to_datetime(r["entrada"]),
                             "salida": pd.to_datetime(r["salida"]),
                             "nombre": str(r["nombre"]).strip(),
-                            "personas": int(r["personas"])
+                            "personas": int(r["personas"]),
+                            "unidad": str(r["unidad"]).strip()
                         })
 
-                    texto = formatear_reservas(reservas)
-
-                    st.text_area("Texto generado:", value=texto, height=300)
-
-st.code(texto, language="")  # Esto lo hace seleccionable y copiable
-
-
-                    st.markdown(
-                        """
-                        <script>
-                        function copyToClipboardArchivo() {
-                            const text = document.getElementById("text_area_archivo").value;
-                            navigator.clipboard.writeText(text).then(function() {
-                                alert("Texto copiado al portapapeles");
-                            }, function(err) {
-                                alert("No se pudo copiar el texto");
-                            });
-                        }
-                        </script>
-                        <button onclick="copyToClipboardArchivo()">Copiar</button>
-                        """,
-                        unsafe_allow_html=True
-                    )
-
-                    st.download_button("📥 Descargar como .txt", data=texto, file_name="reservas.txt")
+                    df_reservas = pd.DataFrame(reservas)
+                    st.markdown("### 📝 Texto generado por departamento")
+                    for unidad in sorted(df_reservas["unidad"].unique()):
+                        grupo = df_reservas[df_reservas["unidad"] == unidad].to_dict(orient="records")
+                        texto = formatear_reservas(grupo)
+                        st.text_area(f"Departamento {unidad.split()[-1]}", value=f"Departamento {unidad.split()[-1]}:\n\n{texto}", height=300)
+                        st.code(f"Departamento {unidad.split()[-1]}:\n\n{texto}", language="")
 
         except Exception as e:
             st.error(f"No se pudo procesar el archivo: {e}")
