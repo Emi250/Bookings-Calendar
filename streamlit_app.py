@@ -77,7 +77,7 @@ with tab1:
 with tab2:
     st.header("📂 Visualizador de reservas")
 
-    archivo = st.file_uploader("Subí un archivo de reservas (.csv o .json)", type=["csv", "json"])
+    archivo = st.file_uploader("Subí un archivo de reservas", type=["csv", "json", "xls", "xlsx"])
 
     if archivo:
         if archivo.name.endswith(".csv"):
