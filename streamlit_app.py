@@ -136,8 +136,10 @@ with tab2:
 
                     texto = formatear_reservas(reservas)
 
-                    st.markdown("### 📝 Texto generado")
-                    st.text_area("Texto generado:", value=texto, height=300, key="text_area_archivo")
+                    st.text_area("Texto generado:", value=texto, height=300)
+
+st.code(texto, language="")  # Esto lo hace seleccionable y copiable
+
 
                     st.markdown(
                         """
